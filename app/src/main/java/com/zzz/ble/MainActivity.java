@@ -1,22 +1,19 @@
 package com.zzz.ble;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import android.bluetooth.BluetoothGatt;
 import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
-
-
 import com.clj.fastble.BleManager;
 import com.clj.fastble.callback.BleGattCallback;
 import com.clj.fastble.callback.BleNotifyCallback;
 import com.clj.fastble.callback.BleScanCallback;
 import com.clj.fastble.data.BleDevice;
 import com.clj.fastble.exception.BleException;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,14 +25,17 @@ public class MainActivity extends AppCompatActivity {
     TextView tvMsg;
 
     List<BleDevice> bleList = new ArrayList<>();
-
+    AlertDialog progressDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         tvMsg = findViewById(R.id.tv_msg);
-        setUpRecyclerView();
 
+        progressDialog = new AlertDialog.Builder(this)
+                .setView(R.layout.layout_progress)
+                .create();
+        setUpRecyclerView();
         BleManager.getInstance().init(getApplication());
         BleManager.getInstance()
                 .enableLog(true)
@@ -80,19 +80,39 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStartConnect() {
                 // 开始连接
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressDialog.show();
+                    }
+                });
+
             }
 
             @Override
             public void onConnectFail(BleDevice bleDevice, BleException exception) {
                 // 连接失败
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressDialog.dismiss();
+                    }
+                });
+
                 Toast.makeText(MainActivity.this, "连接失败" + exception.getDescription(), Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onConnectSuccess(BleDevice bleDevice, BluetoothGatt gatt, int status) {
                 // 连接成功，BleDevice即为所连接的BLE设备
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressDialog.dismiss();
+                    }
+                });
                 Toast.makeText(MainActivity.this, "连接成功", Toast.LENGTH_SHORT).show();
-
+                ((BleRecyclerAdapter)recBle.getAdapter()).setConnectedDevice(bleDevice);
                 //配置接受信息
                 BleManager.getInstance().notify(
                         bleDevice,
@@ -121,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDisConnected(boolean isActiveDisConnected, BleDevice bleDevice, BluetoothGatt gatt, int status) {
                 // 连接中断，isActiveDisConnected表示是否是主动调用了断开连接方法
+                ((BleRecyclerAdapter)recBle.getAdapter()).setConnectedDevice(null);
             }
         });
     }
@@ -148,6 +169,13 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        BleManager.getInstance().disconnectAllDevice();
+        BleManager.getInstance().destroy();
     }
 
 

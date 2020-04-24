@@ -35,4 +35,5 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
 
     implementation 'com.clj.fastble:FastBleLib:2.3.4'
+    implementation 'androidx.cardview:cardview:1.0.0'
 }
