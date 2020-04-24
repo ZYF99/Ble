@@ -5,23 +5,21 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.clj.fastble.data.BleDevice;
-
+import com.vise.baseble.model.BluetoothLeDevice;
 import java.util.List;
 
 public class BleRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     Context context;
-    List<BleDevice> bleList;
-    BleDevice connectedDevice;
+    List<BluetoothLeDevice> bleList;
+    BluetoothLeDevice connectedDevice;
     OnCellClickListener onCellClickListener;
 
-    public BleRecyclerAdapter(Context context, List<BleDevice> bleList) {
+    public BleRecyclerAdapter(Context context, List<BluetoothLeDevice> bleList) {
         this.context = context;
         this.bleList = bleList;
     }
@@ -30,11 +28,13 @@ public class BleRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         TextView tvName;
         TextView tvMac;
+        LinearLayout root;
 
         BleViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tv_name);
             tvMac = itemView.findViewById(R.id.tv_mac);
+            root = itemView.findViewById(R.id.root);
         }
     }
 
@@ -48,13 +48,13 @@ public class BleRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position) {
         BleViewHolder holder1 = (BleViewHolder)holder;
         holder1.tvName.setText(bleList.get(position).getName());
-        holder1.tvMac.setText(bleList.get(position).getMac());
+        holder1.tvMac.setText(bleList.get(position).getAddress());
         if(bleList.get(position) == connectedDevice){
             holder1.itemView.setBackgroundColor(Color.GREEN);
         }else {
             holder1.itemView.setBackgroundColor(Color.WHITE);
         }
-        holder1.itemView.setOnClickListener(new View.OnClickListener() {
+        holder1.root.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onCellClickListener.onCellClick(bleList.get(position));
@@ -62,12 +62,12 @@ public class BleRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         });
     }
 
-    public void replaceData(List<BleDevice> newList){
+    public void replaceData(List<BluetoothLeDevice> newList){
         bleList = newList;
         notifyDataSetChanged();
     }
 
-    public void setConnectedDevice(BleDevice bleDevice){
+    public void setConnectedDevice(BluetoothLeDevice bleDevice){
         this.connectedDevice = bleDevice;
         notifyDataSetChanged();
     }
@@ -82,6 +82,6 @@ public class BleRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     interface OnCellClickListener{
-        void onCellClick(BleDevice bleDevice);
+        void onCellClick(BluetoothLeDevice bleDevice);
     }
 }

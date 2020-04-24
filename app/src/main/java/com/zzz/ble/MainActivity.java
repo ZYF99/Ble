@@ -1,31 +1,49 @@
 package com.zzz.ble;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.bluetooth.BluetoothGatt;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.clj.fastble.BleManager;
 import com.clj.fastble.callback.BleGattCallback;
 import com.clj.fastble.callback.BleNotifyCallback;
 import com.clj.fastble.callback.BleScanCallback;
 import com.clj.fastble.data.BleDevice;
 import com.clj.fastble.exception.BleException;
+import com.vise.baseble.ViseBle;
+import com.vise.baseble.callback.IBleCallback;
+import com.vise.baseble.callback.IConnectCallback;
+import com.vise.baseble.callback.scan.IScanCallback;
+import com.vise.baseble.callback.scan.ScanCallback;
+import com.vise.baseble.common.PropertyType;
+import com.vise.baseble.core.BluetoothGattChannel;
+import com.vise.baseble.core.DeviceMirror;
+import com.vise.baseble.model.BluetoothLeDevice;
+import com.vise.baseble.model.BluetoothLeDeviceStore;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class MainActivity extends AppCompatActivity {
 
     RecyclerView recBle;
     TextView tvMsg;
 
-    List<BleDevice> bleList = new ArrayList<>();
+    List<BluetoothLeDevice> bleList = new ArrayList<>();
     AlertDialog progressDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,20 +53,20 @@ public class MainActivity extends AppCompatActivity {
         progressDialog = new AlertDialog.Builder(this)
                 .setView(R.layout.layout_progress)
                 .create();
+
         setUpRecyclerView();
-        BleManager.getInstance().init(getApplication());
+
+
+
+/*        BleManager.getInstance().init(getApplication());
         BleManager.getInstance()
                 .enableLog(true)
                 .setReConnectCount(1, 5000)
                 .setConnectOverTime(20000)
-                .setOperateTimeout(5000);
+                .setOperateTimeout(5000);*/
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                scanBle();
-            }
-        }).start();
+        scanBle();
+
 
     }
 
@@ -61,22 +79,20 @@ public class MainActivity extends AppCompatActivity {
         //Item点击事件
         adapter.setOnCellClickListener(new BleRecyclerAdapter.OnCellClickListener() {
             @Override
-            public void onCellClick(final BleDevice bleDevice) {
+            public void onCellClick(final BluetoothLeDevice bleDevice) {
                 //点击连接设备
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        connectBle(bleDevice);
-                    }
-                }).start();
-
+                connectBle(bleDevice);
             }
         });
     }
 
     //连接设备
-    private void connectBle(BleDevice bleDevice) {
-        BleManager.getInstance().connect(bleDevice, new BleGattCallback() {
+    private void connectBle(final BluetoothLeDevice bleDevice) {
+        // 开始连接
+
+        progressDialog.show();
+
+      /*  BleManager.getInstance().connect(bleDevice, new BleGattCallback() {
             @Override
             public void onStartConnect() {
                 // 开始连接
@@ -143,12 +159,89 @@ public class MainActivity extends AppCompatActivity {
                 // 连接中断，isActiveDisConnected表示是否是主动调用了断开连接方法
                 ((BleRecyclerAdapter)recBle.getAdapter()).setConnectedDevice(null);
             }
+        });*/
+
+        ViseBle.getInstance().connect(bleDevice, new IConnectCallback() {
+            @Override
+            public void onConnectSuccess(DeviceMirror deviceMirror) {
+                // 连接成功，BleDevice即为所连接的BLE设备
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressDialog.dismiss();
+                        Toast.makeText(MainActivity.this, "连接成功", Toast.LENGTH_SHORT).show();
+                        ((BleRecyclerAdapter) recBle.getAdapter()).setConnectedDevice(bleDevice);
+                    }
+                });
+
+
+                //绑定接受信息方式
+                BluetoothGattChannel bluetoothGattChannel = new BluetoothGattChannel.Builder()
+                        .setBluetoothGatt(deviceMirror.getBluetoothGatt())
+                        .setPropertyType(PropertyType.PROPERTY_NOTIFY)
+                        .setServiceUUID(UUID.randomUUID())
+                        .setCharacteristicUUID(UUID.randomUUID())
+                        .setDescriptorUUID(UUID.randomUUID())
+                        .builder();
+                deviceMirror.bindChannel(new IBleCallback() {
+                    @Override
+                    public void onSuccess(final byte[] data, BluetoothGattChannel bluetoothGattChannel, BluetoothLeDevice bluetoothLeDevice) {
+                        // 打开通知后，设备发过来的数据将在这里出现
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                tvMsg.setText(Arrays.toString(data));
+                            }
+                        });
+
+                    }
+
+                    @Override
+                    public void onFailure(final com.vise.baseble.exception.BleException exception) {
+                        //连接失败
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressDialog.dismiss();
+                                Toast.makeText(MainActivity.this, "连接失败" + exception.getDescription(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+
+                }, bluetoothGattChannel);
+                deviceMirror.registerNotify(false);
+
+                deviceMirror.setNotifyListener(bluetoothGattChannel.getGattInfoKey(), new IBleCallback() {
+                    @Override
+                    public void onSuccess(byte[] data, BluetoothGattChannel bluetoothGattChannel, BluetoothLeDevice bluetoothLeDevice) {
+
+                    }
+
+                    @Override
+                    public void onFailure(com.vise.baseble.exception.BleException exception) {
+
+                    }
+                });
+
+            }
+
+            @Override
+            public void onConnectFailure(com.vise.baseble.exception.BleException exception) {
+
+            }
+
+            @Override
+            public void onDisconnect(boolean isActive) {
+
+            }
         });
+
+
     }
 
     //扫描蓝牙设备
     private void scanBle() {
-        BleManager.getInstance().enableBluetooth();
+/*        BleManager.getInstance().enableBluetooth();
         BleManager.getInstance().scan(new BleScanCallback() {
             @Override
             public void onScanStarted(boolean success) {
@@ -168,7 +261,40 @@ public class MainActivity extends AppCompatActivity {
                 // 扫描完成的回调，列表里将不会有重复的设备
 
             }
-        });
+        });*/
+
+
+        ViseBle.getInstance().startScan(new ScanCallback(new IScanCallback() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
+            @Override
+            public void onDeviceFound(final BluetoothLeDevice ble) {
+                //当搜索到多了一个设备，添加在列表中并更新列表控件
+                if (bleList.stream().anyMatch(new Predicate<BluetoothLeDevice>() {
+                    @Override
+                    public boolean test(BluetoothLeDevice bluetoothLeDevice) {
+                        return bluetoothLeDevice.getAddress().equals(ble.getAddress());
+                    }
+                })) {
+                    //其中含有同mac设备 不添加
+                } else {
+                    //不含mac相同 添加
+                    bleList.add(ble);
+                    recBle.getAdapter().notifyItemInserted(bleList.size() - 1);
+                }
+            }
+
+            @Override
+            public void onScanFinish(BluetoothLeDeviceStore bluetoothLeDeviceStore) {
+
+            }
+
+            @Override
+            public void onScanTimeout() {
+
+            }
+        }));
+
+
     }
 
     @Override
