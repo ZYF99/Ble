@@ -35,6 +35,6 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.cardview:cardview:1.0.0'
 
-    implementation 'com.clj.fastble:FastBleLib:2.3.4'
-    implementation 'com.vise.xiaoyaoyou:baseble:2.0.5'
+    implementation 'com.clj.fastble:FastBleLib:2.3.4'  //备用蓝牙连接框架 项目地址 https://github.com/Jasonchenlijian/FastBle
+    implementation 'com.vise.xiaoyaoyou:baseble:2.0.5' //首选蓝牙连接框架 项目地址 https://github.com/xiaoyaoyou1212/BLE
 }

@@ -6,18 +6,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.bluetooth.BluetoothGatt;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.clj.fastble.BleManager;
-import com.clj.fastble.callback.BleGattCallback;
-import com.clj.fastble.callback.BleNotifyCallback;
-import com.clj.fastble.callback.BleScanCallback;
-import com.clj.fastble.data.BleDevice;
-import com.clj.fastble.exception.BleException;
 import com.vise.baseble.ViseBle;
 import com.vise.baseble.callback.IBleCallback;
 import com.vise.baseble.callback.IConnectCallback;
@@ -33,30 +29,62 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class MainActivity extends AppCompatActivity {
 
-    RecyclerView recBle;
     TextView tvMsg;
-
+    TextView btnConnectBle;
+    TextView btnDisConnectBle;
+    TextView btnExit;
+    RecyclerView recBle;
     List<BluetoothLeDevice> bleList = new ArrayList<>();
-    AlertDialog progressDialog;
+    AlertDialog progressDialog; //加载弹窗
+    AlertDialog bleDialog; //蓝牙选择弹窗
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         tvMsg = findViewById(R.id.tv_msg);
+        btnConnectBle = findViewById(R.id.btn_connect_ble);
+        btnDisConnectBle = findViewById(R.id.btn_disconnect_ble);
+        btnExit = findViewById(R.id.btn_exit);
 
         progressDialog = new AlertDialog.Builder(this)
                 .setView(R.layout.layout_progress)
                 .create();
 
-        setUpRecyclerView();
 
+        //连接蓝牙按钮
+        btnConnectBle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showBleDialog();
+            }
+        });
 
+        //断开连接按钮
+        btnDisConnectBle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                disConnect(); //断开所有蓝牙连接
+                btnConnectBle.setVisibility(View.VISIBLE); //展示连接按钮
+                btnDisConnectBle.setVisibility(View.GONE); //隐藏断开按钮
+            }
+        });
+
+        //退出程序按钮
+        btnExit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        //配置按钮初始化的显示
+        btnConnectBle.setVisibility(View.VISIBLE); //展示连接按钮
+        btnDisConnectBle.setVisibility(View.GONE); //隐藏断开按钮
 
 /*        BleManager.getInstance().init(getApplication());
         BleManager.getInstance()
@@ -65,17 +93,14 @@ public class MainActivity extends AppCompatActivity {
                 .setConnectOverTime(20000)
                 .setOperateTimeout(5000);*/
 
-        scanBle();
-
 
     }
 
+    //配置RecyclerView
     private void setUpRecyclerView() {
-        recBle = findViewById(R.id.rec_ble);
         recBle.setLayoutManager(new LinearLayoutManager(this));
         BleRecyclerAdapter adapter = new BleRecyclerAdapter(this, bleList);
         recBle.setAdapter(adapter);
-
         //Item点击事件
         adapter.setOnCellClickListener(new BleRecyclerAdapter.OnCellClickListener() {
             @Override
@@ -163,14 +188,23 @@ public class MainActivity extends AppCompatActivity {
 
         ViseBle.getInstance().connect(bleDevice, new IConnectCallback() {
             @Override
-            public void onConnectSuccess(DeviceMirror deviceMirror) {
-                // 连接成功，BleDevice即为所连接的BLE设备
-                runOnUiThread(new Runnable() {
+            public void onConnectSuccess(DeviceMirror deviceMirror) {// 连接成功的回调，BleDevice即为所连接的BLE设备
+                runOnUiThread(new Runnable() {//主线程实现Runnable接口更新UI
                     @Override
                     public void run() {
-                        progressDialog.dismiss();
                         Toast.makeText(MainActivity.this, "连接成功", Toast.LENGTH_SHORT).show();
-                        ((BleRecyclerAdapter) recBle.getAdapter()).setConnectedDevice(bleDevice);
+                        //隐藏加载弹窗（转圈）
+                        progressDialog.dismiss();
+                        //将连接蓝牙按钮隐藏
+                        btnConnectBle.setVisibility(View.GONE);
+                        //将断开连接按钮展示
+                        btnDisConnectBle.setVisibility(View.VISIBLE);
+                        //当蓝牙弹窗还是显示状态时
+                        if(bleDialog.isShowing()){
+                            //更新列表中的已连接，背景变绿
+                            ((BleRecyclerAdapter) recBle.getAdapter()).setConnectedDevice(bleDevice);
+                        }
+
                     }
                 });
 
@@ -239,6 +273,11 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //断开连接
+    private void disConnect(){
+        ViseBle.getInstance().disconnect();
+    }
+
     //扫描蓝牙设备
     private void scanBle() {
 /*        BleManager.getInstance().enableBluetooth();
@@ -279,7 +318,9 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     //不含mac相同 添加
                     bleList.add(ble);
-                    recBle.getAdapter().notifyItemInserted(bleList.size() - 1);
+                    if (bleDialog.isShowing()) {
+                        recBle.getAdapter().notifyItemInserted(bleList.size() - 1);
+                    }
                 }
             }
 
@@ -302,6 +343,20 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         BleManager.getInstance().disconnectAllDevice();
         BleManager.getInstance().destroy();
+    }
+
+    //弹出蓝牙选择弹窗
+    private void showBleDialog() {
+        View bleDialogView = LayoutInflater.from(this).inflate(R.layout.dialog_ble, null, false);
+        recBle = bleDialogView.findViewById(R.id.rec_ble);
+        bleDialog = new AlertDialog.Builder(this)
+                .setTitle("请选择蓝牙设备")
+                .setView(bleDialogView)
+                .setNegativeButton("取消",null)
+                .create();
+        setUpRecyclerView();
+        bleDialog.show();
+        scanBle();
     }
 
 
