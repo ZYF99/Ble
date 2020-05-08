@@ -26,14 +26,19 @@ import com.vise.baseble.model.BluetoothLeDevice;
 import com.vise.baseble.model.BluetoothLeDeviceStore;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.function.Predicate;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView tvMsg;
+    TextView tvTemp;
+    TextView tvHe;
+    TextView tvCo;
+    TextView tvStatus;
+
     TextView btnConnectBle;
     TextView btnDisConnectBle;
     TextView btnExit;
@@ -42,11 +47,86 @@ public class MainActivity extends AppCompatActivity {
     AlertDialog progressDialog; //加载弹窗
     AlertDialog bleDialog; //蓝牙选择弹窗
 
+    List<String> mockTemp = new ArrayList<>(); //温度
+    List<String> mockHe = new ArrayList<>(); //湿度
+    List<String> mockCo = new ArrayList<>(); //浓度
+    List<String> mockStatus = new ArrayList<>(); //状态
+
+    Boolean isConnected = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        tvMsg = findViewById(R.id.tv_msg);
+
+
+
+
+        mockTemp.add("34");
+        mockTemp.add("30");
+        mockTemp.add("29");
+        mockTemp.add("32");
+        mockTemp.add("30");
+        mockTemp.add("30");
+        mockTemp.add("31");
+        mockTemp.add("31");
+        mockTemp.add("30");
+        mockTemp.add("32");
+        mockTemp.add("30");
+        mockTemp.add("32");
+        mockTemp.add("32");
+        mockTemp.add("33");
+
+        mockHe.add("50");
+        mockHe.add("53");
+        mockHe.add("52");
+        mockHe.add("54");
+        mockHe.add("54");
+        mockHe.add("54");
+        mockHe.add("53");
+        mockHe.add("54");
+        mockHe.add("53");
+        mockHe.add("54");
+        mockHe.add("54");
+        mockHe.add("53");
+        mockHe.add("53");
+        mockHe.add("54");
+
+        mockCo.add("120");
+        mockCo.add("125");
+        mockCo.add("119");
+        mockCo.add("126");
+        mockCo.add("125");
+        mockCo.add("123");
+        mockCo.add("125");
+        mockCo.add("128");
+        mockCo.add("127");
+        mockCo.add("123");
+        mockCo.add("118");
+        mockCo.add("131");
+        mockCo.add("121");
+        mockCo.add("123");
+
+        mockStatus.add("无人");
+        mockStatus.add("无人");
+        mockStatus.add("有人");
+        mockStatus.add("有人");
+        mockStatus.add("有人");
+        mockStatus.add("有人");
+        mockStatus.add("有人");
+        mockStatus.add("有人");
+        mockStatus.add("无人");
+        mockStatus.add("无人");
+        mockStatus.add("无人");
+        mockStatus.add("无人");
+        mockStatus.add("无人");
+        mockStatus.add("无人");
+
+        tvTemp = findViewById(R.id.tv_temp);
+        tvHe = findViewById(R.id.tv_he);
+        tvCo = findViewById(R.id.tv_co);
+        tvStatus = findViewById(R.id.tv_status);
+
         btnConnectBle = findViewById(R.id.btn_connect_ble);
         btnDisConnectBle = findViewById(R.id.btn_disconnect_ble);
         btnExit = findViewById(R.id.btn_exit);
@@ -189,6 +269,7 @@ public class MainActivity extends AppCompatActivity {
         ViseBle.getInstance().connect(bleDevice, new IConnectCallback() {
             @Override
             public void onConnectSuccess(DeviceMirror deviceMirror) {// 连接成功的回调，BleDevice即为所连接的BLE设备
+                isConnected = true;
                 runOnUiThread(new Runnable() {//主线程实现Runnable接口更新UI
                     @Override
                     public void run() {
@@ -200,10 +281,36 @@ public class MainActivity extends AppCompatActivity {
                         //将断开连接按钮展示
                         btnDisConnectBle.setVisibility(View.VISIBLE);
                         //当蓝牙弹窗还是显示状态时
-                        if(bleDialog.isShowing()){
+                        if (bleDialog.isShowing()) {
                             //更新列表中的已连接，背景变绿
                             ((BleRecyclerAdapter) recBle.getAdapter()).setConnectedDevice(bleDevice);
                         }
+
+                        final int[] index = {0};
+                        //定时更新
+                        new Timer("testTimer").schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if(isConnected){
+                                            if (index[0] == 0 || index[0] == 14) {
+                                                tvTemp.setText(mockTemp.get(0));
+                                            } else {
+                                                tvTemp.setText(mockTemp.get(index[0] % 14));
+                                                tvHe.setText(mockHe.get(index[0] % 14));
+                                                tvCo.setText(mockCo.get(index[0] % 14));
+                                                tvStatus.setText(mockStatus.get(index[0] % 14));
+                                            }
+                                            index[0]++;
+                                        }
+
+                                    }
+                                });
+                            }
+                        }, 1000, 1000);
+
 
                     }
                 });
@@ -221,12 +328,6 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(final byte[] data, BluetoothGattChannel bluetoothGattChannel, BluetoothLeDevice bluetoothLeDevice) {
                         // 打开通知后，设备发过来的数据将在这里出现
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                tvMsg.setText(Arrays.toString(data));
-                            }
-                        });
 
                     }
 
@@ -266,7 +367,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onDisconnect(boolean isActive) {
-
+                isConnected = false;
             }
         });
 
@@ -274,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //断开连接
-    private void disConnect(){
+    private void disConnect() {
         ViseBle.getInstance().disconnect();
     }
 
@@ -352,7 +453,7 @@ public class MainActivity extends AppCompatActivity {
         bleDialog = new AlertDialog.Builder(this)
                 .setTitle("请选择蓝牙设备")
                 .setView(bleDialogView)
-                .setNegativeButton("取消",null)
+                .setNegativeButton("取消", null)
                 .create();
         setUpRecyclerView();
         bleDialog.show();

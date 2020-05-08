@@ -10,97 +10,180 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+
+
+
+
+
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/logo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ICSS"
-            android:textColor="#ffffff"
-            android:textSize="54sp"
-            android:layout_marginTop="108dp"
-            android:textStyle="bold|italic"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:gravity="center"
+            android:text="智浴系统"
+            android:textColor="#000"
+            android:textSize="24dp" />
 
-        <TextView
-            android:id="@+id/tv_tip_temp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="72dp"
-            android:text="当前温度："
-            android:textColor="#ffffff"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/logo"
-            app:layout_constraintTop_toBottomOf="@id/logo" />
-
-        <TextView
+        <Button
             android:id="@+id/btn_connect_ble"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="连接蓝牙"/>
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="连接蓝牙"
-            android:textColor="#ffffff"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/tv_tip_temp"
-            app:layout_constraintTop_toBottomOf="@+id/tv_tip_temp" />
+            android:padding="4dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tv_tip_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:text="当前温度："
+                android:textColor="#000"
+                android:textSize="18sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_tip_temp" />
 
-        <TextView
-            android:id="@+id/btn_disconnect_ble"
+            <TextView
+                android:id="@+id/tv_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="温度消息"
+                android:textColor="#000"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_tip_he"
+                app:layout_constraintStart_toEndOf="@+id/tv_tip_temp"
+                app:layout_constraintTop_toTopOf="@+id/tv_tip_he" />
+            <TextView
+                android:id="@+id/tv_tip_he"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:text="当前湿度："
+                android:textColor="#000"
+                android:textSize="18sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_tip_temp" />
+
+            <TextView
+                android:id="@+id/tv_he"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="湿度消息"
+                android:textColor="#000"
+                android:textSize="18sp"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_tip_he"
+                app:layout_constraintStart_toEndOf="@+id/tv_tip_temp"
+                app:layout_constraintTop_toTopOf="@+id/tv_tip_he" />
+        </LinearLayout>
+
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="断开连接"
-            android:textColor="#ffffff"
-            android:textSize="18sp"
-            android:layout_marginTop="16dp"
-            android:textStyle="bold"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/btn_connect_ble"
-            app:layout_constraintTop_toBottomOf="@+id/btn_connect_ble" />
+            android:padding="4dp"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tv_tip_co"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:text="co浓度："
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tv_co"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CO浓度消息"
+                android:textColor="#000"
+                android:textSize="18sp"/>
+
+            <TextView
+                android:id="@+id/tv_tip_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:text="检测状态："
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tv_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="有/无人"
+                android:textColor="#000"
+                android:textSize="18sp" />
 
 
-        <TextView
-            android:id="@+id/btn_exit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="退出程序"
-            android:textColor="#ffffff"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/btn_disconnect_ble"
-            app:layout_constraintTop_toBottomOf="@+id/btn_disconnect_ble" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/tv_msg"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:textSize="18sp"
-            android:text="蓝牙消息"
-            android:textColor="#ffffff"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_tip_temp"
-            app:layout_constraintStart_toEndOf="@+id/tv_tip_temp"
-            app:layout_constraintTop_toTopOf="@+id/tv_tip_temp" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+
+
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:gravity="center">
+
+    <TextView
+        android:id="@+id/btn_disconnect_ble"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="6dp"
+        android:text="断开连接"
+        android:background="#C5C5C5"
+        android:textColor="#000"
+        android:textSize="18sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/btn_connect_ble"
+        app:layout_constraintTop_toBottomOf="@+id/btn_connect_ble" />
+
+
+    <TextView
+        android:id="@+id/btn_exit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="6dp"
+        android:text="退出程序"
+        android:layout_marginStart="16dp"
+        android:textColor="#000"
+        android:background="#C5C5C5"
+        android:textSize="18sp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/btn_disconnect_ble"
+        app:layout_constraintTop_toBottomOf="@+id/btn_disconnect_ble" />
+
+
+</LinearLayout>
+
+
+
+    </LinearLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
